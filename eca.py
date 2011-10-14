@@ -3,6 +3,11 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
+try:
+    from _caalgo import eca_cyevolve
+except ImportError:
+    eca_cyevolve = None
+
 class ECA(object):
     def __init__(self, rule):
         """Initialize the ECA.
@@ -23,6 +28,11 @@ class ECA(object):
 
         # spacetime array
         self.sta = None
+        
+        if eca_cyevolve is not None:
+            self._cythonized = True
+        else:
+            self._cythonized = False
 
 
     def __repr__(self):
@@ -168,9 +178,9 @@ class ECA(object):
         if self.sta is None or self.sta.shape != shape:
             # allocate a new array
             if clear:
-                self.sta = np.zeros(shape, dtype=int, order='C')
+                self.sta = np.zeros(shape, dtype=np.int32, order='C')
             else:
-                self.sta = np.empty(shape, dtype=int, order='C')
+                self.sta = np.empty(shape, dtype=np.int32, order='C')
         elif clear:
             # otherwise, clear it if desired (keeping the original array)
             self.sta *= 0
@@ -199,9 +209,15 @@ class ECA(object):
         """
         self._verify_initialized()  
         if t is None:
-            t = self.sta.shape[0] - 1          
-        self._evolve_python(t)
-        show_spacetime(self)
+            t = self.sta.shape[0] - 1  
+            
+        if self._cythonized:
+            self._evolve_cython(t)
+        else:        
+            self._evolve_python(t)
+
+        if show:
+            show_spacetime(self)
 
 
     def _verify_initialized(self):
@@ -218,7 +234,7 @@ class ECA(object):
                 self.sta[i+1,j] = self.eval(parents)
 
     def _evolve_cython(self, iterations):
-        pass
+        eca_cyevolve(self._lookup, self.sta, iterations)
 
     
 def get_tikzrule(eca, boxes=True, numbers=True, rule=True):
