@@ -248,7 +248,7 @@ def show_lightcone(eca, cell):
         index of the cell.
         
     """
-    self._verify_initialized()
+    eca._verify_initialized()
     # matplotlib
     pass
     
@@ -273,7 +273,7 @@ def show_twolightcones(eca, cell1, cell2, color1=None, color2=None, color3=None)
         cell1 and cell2.
         
     """
-    self._verify_initialized()        
+    eca._verify_initialized()        
     # matplotlib
     pass
 
