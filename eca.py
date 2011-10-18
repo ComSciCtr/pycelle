@@ -334,12 +334,12 @@ def get_tikzrule(eca, boxes=True, numbers=True, rule=True, stand_alone=False):
     colors = ['w','b']
     bw_boxes = [colors[int(i)] for i in bit_string]   
 
-    if rule==True:
+    if rule:
         title = title_tex.format(title='Rule %i' %(eca.rule))
     else:
         title = ''
     
-    if numbers==True:
+    if numbers:
         bit_labels = bit_label_tex.format(*bit_string)
     else:
         bit_labels = ''
@@ -355,9 +355,9 @@ def get_tikzrule(eca, boxes=True, numbers=True, rule=True, stand_alone=False):
     tikz_code = tikz_code.format(**options)
 
     if stand_alone:
-        return tikz_code
+        return full_tex.format(tikz_code=tikz_code)
     else:
-        return full_tex.format(tikz_code=tikz_code) 
+        return tikz_code
     
 def show_rule(eca, boxes=True, numbers=True, rule=True):
     """Show the rule."""
