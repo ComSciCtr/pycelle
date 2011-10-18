@@ -4,9 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 try:
-    from _caalgo import eca_cyevolve, lightcone_counts
+    from _caalgo import eca_cyevolve
 except ImportError:
     eca_cyevolve = None
+    
+try:
+    # This is only available if you have NumPy 1.7 or higher.
+    from _lightcones import lightcone_counts
+except ImportError:
+    pass
 
 class ECA(object):
     def __init__(self, rule):
