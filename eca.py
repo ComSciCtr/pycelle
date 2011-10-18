@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 try:
-    from _caalgo import eca_cyevolve
+    from _caalgo import eca_cyevolve, lightcone_counts
 except ImportError:
     eca_cyevolve = None
 
@@ -194,7 +194,7 @@ class ECA(object):
             raise Exception('Invalid `ic` specificiation.')
             
 
-    def evolve(self, t=None, show=True):
+    def evolve(self, t=None, draw=True):
         """Evolves the cellular automaton from the inital row by t time steps.
         
         Parameters
@@ -203,8 +203,8 @@ class ECA(object):
             If `None`, then the cellular automaton is evolved to fill the
             allocated spacetime array.
             
-        show : bool
-            If `True`, then show the ECA after evolving it.
+        draw : bool
+            If `True`, then draw the ECA after evolving it.
             
         """
         self._verify_initialized()  
@@ -216,8 +216,8 @@ class ECA(object):
         else:        
             self._evolve_python(t)
 
-        if show:
-            show_spacetime(self)
+        if draw:
+            draw_spacetime(self)
 
 
     def _verify_initialized(self):
@@ -294,7 +294,7 @@ def show_twolightcones(eca, cell1, cell2, color1=None, color2=None, color3=None)
     pass
 
     
-def show_spacetime(eca, twindow=None, xwindow=None, ax=None):
+def draw_spacetime(eca, twindow=None, xwindow=None, ax=None):
     """Show the existing spacetime array.
     
     Parameters
@@ -324,7 +324,7 @@ def show_spacetime(eca, twindow=None, xwindow=None, ax=None):
         
     ax.matshow(arr, cmap=plt.cm.gray_r)
     ax.set_title('Rule {0}'.format(eca.rule))
-    plt.show()
+    plt.draw()
     
 
 

@@ -13,5 +13,5 @@ caalgo = Extension(
 
 setup(
     cmdclass = {'build_ext':build_ext},
-    ext_modules = [caalgo,]
+    ext_modules = [caalgo]
 )
