@@ -74,18 +74,22 @@ def lightcone_counts(np.ndarray[ITYPE_t, ndim=2] sta, ITYPE_t hLength, ITYPE_t f
     # For the history-future light cone, we need to store
     #   (1 + hLength)^2 + (1 + fLength^2) - 1
     # values, but saving space for the null character we add one more.
-    cdef int total = (1 + hLength)**2 + (1 + fLength)**2
+    cdef np.npy_intp hlcSize = (1+hLength)**2
+    cdef np.npy_intp flcSize = (1+fLength)**2
+    cdef int total
+    if hlcSize >= flcSize:
+        total = hlcSize
+    else:
+        total = flcSize
     cdef char *lcPtr = <char *>malloc(total * sizeof(char))
     if not lcPtr:
         raise MemoryError()
     else:
-        lcPtr[total] = '\0'
+        lcPtr[total-1] = '\0'
 
     cdef np.npy_intp i,j, lcidx, h, f, k, ni, nj, hlc_id, flc_id
     cdef bytes lc
 
-    cdef np.npy_intp hlcSize = (1+hLength)**2
-    cdef np.npy_intp flcSize = (1+fLength)**2
 
     hlcones = {}
     flcones = {}
@@ -100,8 +104,8 @@ def lightcone_counts(np.ndarray[ITYPE_t, ndim=2] sta, ITYPE_t hLength, ITYPE_t f
                 # Now we grab the cones at each point (i,j)
 
                 ### Grab the history light cone.
-                lcPtr[hlcSize] = '\0'
-                lcPtr[flcSize] = 'A' # any non-null character works
+                lcPtr[hlcSize-1] = '\0'
+                lcPtr[flcSize-1] = 'A' # any non-null character works
                 lcidx = 0
                 for h in range(hLength, -1, -1):
                     ni = i - h
@@ -122,8 +126,8 @@ def lightcone_counts(np.ndarray[ITYPE_t, ndim=2] sta, ITYPE_t hLength, ITYPE_t f
 
                 ### Grab the future light cone
 
-                lcPtr[hlcSize] = 'A' # any non-null character works
-                lcPtr[flcSize] = '\0'
+                lcPtr[hlcSize-1] = 'A' # any non-null character works
+                lcPtr[flcSize-1] = '\0'
                 lcidx = 0
                 for f in range(0, fLength+1):
                     ni = i + f
