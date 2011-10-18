@@ -237,7 +237,7 @@ class ECA(object):
         eca_cyevolve(self._lookup, self.sta, iterations)
 
     
-def get_tikzrule(eca, boxes=True, numbers=True, rule=True):
+def get_tikzrule(eca, boxes=True, numbers=True, rule=True, stand_alone=False):
     """Returns TiKz code for displaying the rule."""
     # Something like: 
     #   http://mathworld.wolfram.com/ElementaryCellularAutomaton.html
@@ -245,7 +245,119 @@ def get_tikzrule(eca, boxes=True, numbers=True, rule=True):
     #   option: containing boxes True|False
     #   option: numbers below    True|False
     #   option: rule in decimal  True|False
-    pass
+    full_tex = r"""
+    \documentclass{{article}}
+    \usepackage{{tikz}}
+    
+    \begin{{document}}
+    
+    {tikz_code}
+
+    \end{{document}}"""
+    
+    tikz_code=r"""
+    \begin{{tikzpicture}}[node distance=15pt]
+    \tikzstyle{{b}}=[draw=black,fill=black]
+    \tikzstyle{{w}}=[draw=black,fill=white]
+    \tikzstyle{{mstyle}}=[draw={borders},column sep=1pt,row sep=1pt]
+    
+    %Layout the blocks containing the rule
+    \matrix [mstyle]{{
+    
+    \node[b]  {{}}; & \node[b] {{}}; & \node[b] {{}};\\
+                               & \node[{bw_boxes[0]}] (o1) {{}}; & \\
+    }};
+    
+    \matrix [mstyle] at (30pt,0){{
+    
+    \node[b]  {{}}; & \node[b] {{}}; & \node[w] {{}};\\
+                               & \node[{bw_boxes[1]}] (o2) {{}}; & \\
+    }};
+     
+    \matrix [mstyle] at (60pt,0){{
+    
+    \node[b]  {{}}; & \node[w] {{}}; & \node[b] {{}};\\
+                               & \node[{bw_boxes[2]}] (o3) {{}}; & \\
+    }};
+     
+    \matrix [mstyle] at (90pt,0){{
+    
+    \node[b]  {{}}; & \node[w] {{}}; & \node[w] {{}};\\
+                               & \node[{bw_boxes[3]}] (o4) {{}}; & \\
+    }};
+     
+    \matrix [mstyle] at (120pt,0){{
+    
+    \node[w]  {{}}; & \node[b] {{}}; & \node[b] {{}};\\
+                               & \node[{bw_boxes[4]}] (o5) {{}}; & \\
+    }};
+     
+    \matrix [mstyle] at (150pt,0){{
+    
+    \node[w]  {{}}; & \node[b] {{}}; & \node[w] {{}};\\
+                               & \node[{bw_boxes[5]}] (o6) {{}}; & \\
+    }};
+    
+    \matrix [mstyle] at (180pt,0){{
+    
+    \node[w]  {{}}; & \node[w] {{}}; & \node[b] {{}};\\
+                               & \node[{bw_boxes[6]}] (o7) {{}}; & \\
+    }};
+     
+    \matrix [mstyle] at (210pt,0){{
+    \node[w]  {{}}; & \node[w] {{}}; & \node[w] {{}};\\
+                               & \node[{bw_boxes[7]}] (o8) {{}}; & \\
+    }};
+    
+    {title}
+    
+    {bit_labels}
+    
+    \end{{tikzpicture}}
+    """
+    
+    title_tex=r"\node at (105pt,20pt) {{{title}}};"
+    
+    bit_label_tex=r"""
+    %Numbers under the blocks
+    \node [below of=o1]{{{0}}}; 
+    \node [below of=o2]{{{1}}}; 
+    \node [below of=o3]{{{2}}}; 
+    \node [below of=o4]{{{3}}}; 
+    \node [below of=o5]{{{4}}}; 
+    \node [below of=o6]{{{5}}}; 
+    \node [below of=o7]{{{6}}}; 
+    \node [below of=o8]{{{7}}};
+    """
+
+    bit_string = '{0:08b}'.format(eca.rule)
+    colors = ['w','b']
+    bw_boxes = [colors[int(i)] for i in bit_string]   
+
+    if rule==True:
+        title = title_tex.format(title='Rule %i' %(eca.rule))
+    else:
+        title = ''
+    
+    if numbers==True:
+        bit_labels = bit_label_tex.format(*bit_string)
+    else:
+        bit_labels = ''
+
+    if boxes:
+        borders = 'black'
+    else:
+        borders = 'white'
+    
+    options = {'title':title,'borders':borders,'bit_labels':bit_labels,
+                'bw_boxes':bw_boxes}
+    
+    tikz_code = tikz_code.format(**options)
+
+    if stand_alone:
+        return tikz_code
+    else:
+        return full_tex.format(tikz_code=tikz_code) 
     
 def show_rule(eca, boxes=True, numbers=True, rule=True):
     """Show the rule."""
@@ -325,6 +437,4 @@ def draw_spacetime(eca, twindow=None, xwindow=None, ax=None):
     ax.matshow(arr, cmap=plt.cm.gray_r)
     ax.set_title('Rule {0}'.format(eca.rule))
     plt.draw()
-    
-
 
