@@ -54,6 +54,9 @@ class ECA(object):
         else:
             self._cythonized = False
 
+        # Drawing defaults
+        self._update_extent = True
+
 
     def __repr__(self):
         return 'ECA({0})'.format(self.rule)
@@ -71,18 +74,31 @@ class ECA(object):
         if ax is None:
             ax = plt.gca()
 
+        t, sta = self.t, self._sta
+
         # We do not call get_spacetime() in order to avoid a copy when possible.
-        div, mod = divmod(self.t, self._sta.shape[0])
+        div, mod = divmod(t, sta.shape[0])
         if not div:
             # Then we have not "rolled" over. Show it all.
-            arr = self._sta
+            arr = sta
         else:
             # Roll so that the current row becomes the last row.
             # This forces a copy!
-            arr = np.roll(self._sta, self._sta.shape[0] - mod - 1, axis=0)
+            arr = np.roll(sta, sta.shape[0] - mod - 1, axis=0)
 
-        ax.matshow(arr, cmap=plt.cm.gray_r)
+        if self._update_extent:
+            if not div:
+                extent = [0, sta.shape[1] - 1, sta.shape[0], 0]
+            else:
+                extent = [0, sta.shape[1] - 1, t, t - sta.shape[0]]
+        else:
+            extent = None
+
+        ax.matshow(arr, cmap=plt.cm.gray_r, extent=extent)
         ax.set_title('Rule {0}'.format(self.rule))
+        ax.set_xlabel('$x$')
+        ax.set_ylabel('$t$', rotation='horizontal')
+        ax.xaxis.set_ticks_position('bottom')
         plt.draw()
 
 
@@ -128,7 +144,7 @@ class ECA(object):
             return self._lookup[idx]
 
 
-    def evolve(self, t=None, draw=True):
+    def evolve(self, t=None, draw=True, **kwargs):
         """Evolves the cellular automaton from the inital row by t time steps.
 
         Parameters
@@ -164,7 +180,7 @@ class ECA(object):
         self.t += t
 
         if draw:
-            self.draw()
+            self.draw(**kwargs)
 
         return self.t
 
