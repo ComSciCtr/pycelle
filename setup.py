@@ -5,8 +5,8 @@ import numpy
 
 caalgo = Extension(
     "_caalgo", 
-    ["_caalgo.pyx", 'src/evolve.c'],
-    include_dirs=[numpy.get_include(), 'src'],
+    ["_caalgo.pyx"],
+    include_dirs=[numpy.get_include()],
     libraries=["m"],
     extra_compile_args=['-std=c99']
 )
@@ -14,7 +14,7 @@ caalgo = Extension(
 lightcones = Extension(
     "_lightcones", 
     ["_lightcones.pyx"],
-    include_dirs=[numpy.get_include(), 'src'],
+    include_dirs=[numpy.get_include()],
     libraries=["m"],
     extra_compile_args=['-std=c99']
 )
