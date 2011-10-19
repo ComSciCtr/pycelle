@@ -27,8 +27,7 @@ class ECA(object):
         shape : 2-tuple
             The shape of the spacetime array.
         ic : array | str | None
-            The initial condition of the ECA. If `None`, then one should call
-            the `initialize()` method after creation.
+            The initial condition of the ECA. If `None`, then 'random' is used.
 
         Examples
         --------
@@ -48,9 +47,7 @@ class ECA(object):
         self.ic = None
         self.t = 0
         self._sta = np.zeros(shape, dtype=np.uint8, order='C')
-
-        if ic is not None:
-            self.initialize(ic, clear=False)
+        self.initialize(ic, clear=False)
 
         if eca_cyevolve is not None:
             self._cythonized = True
@@ -252,7 +249,7 @@ class ECA(object):
         return get_tikzrule(self, boxes, numbers, rule, stand_alone)
 
 
-    def initialize(self, ic='random', clear=True):
+    def initialize(self, ic=None, clear=True):
         """Initialize the ECA's spacetime array.
 
         A new spacetime array is allocated only if necessary.
@@ -264,6 +261,7 @@ class ECA(object):
             A specification of how to initialize the spacetime array.
             If some other initialization is desired, one can explicitly
             set the first row of the spacetime array via self._sta[0].
+            If `None`, then 'random' is used.
 
             Valid options:
 
@@ -279,6 +277,9 @@ class ECA(object):
             row is initialized.
 
         """
+        if ic is None:
+            ic = 'random'
+
         # Reset the array
         self.t = 0
         if clear:
