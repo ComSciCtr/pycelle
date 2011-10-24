@@ -18,15 +18,12 @@ from libc.stdlib cimport malloc, free
 import numpy as np
 cimport numpy as np
 
-ITYPE   = np.int32
-ctypedef np.int32_t ITYPE_t
-
 __all__ = ['lightcone_counts']
 
 # Required before using any NumPy C-API
 np.import_array()
 
-def lightcone_counts(np.ndarray[ITYPE_t, ndim=2] sta, ITYPE_t hLength, ITYPE_t fLength):
+def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.uint8_t fLength):
     """Counts light cones from an array.
 
     Parameters
@@ -64,8 +61,9 @@ def lightcone_counts(np.ndarray[ITYPE_t, ndim=2] sta, ITYPE_t hLength, ITYPE_t f
         msg = 'hLength and fLength are too large for the spacetime array.'
         raise Exception(msg)
 
-    cdef np.ndarray[ITYPE_t, ndim=3] lca
-    lca = -1 * np.zeros((3, nRows, nCols), dtype=ITYPE, maskna=True)
+    cdef np.ndarray[np.int_t, ndim=3] lca
+    # Use -1 to designate "unassigned"
+    lca = -1 + np.zeros((3, nRows, nCols), dtype=np.int, maskna=True)
     lca[:,:hLength,:] = np.NA
     lca[:,-fLength:,:] = np.NA
 
