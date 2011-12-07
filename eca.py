@@ -163,6 +163,9 @@ class ECA(object):
             The current time of the ECA.
 
         """
+        if 'ic' in kwargs:
+            self.initialize( kwargs.pop('ic') )
+            
         if t is None:
             # If we are not the last row, evolve to the last row.
             nRows = self._sta.shape[0]
