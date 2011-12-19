@@ -13,16 +13,19 @@ from cmpy.infotheory import ConditionalDistribution, Distribution, Event
 import cython
 cimport cython
 
-from libc.stdlib cimport malloc, free
-
 import numpy as np
 cimport numpy as np
+
+from libc.stdlib cimport malloc, free
 
 __all__ = ['lightcone_counts']
 
 # Required before using any NumPy C-API
 np.import_array()
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.embedsignature(True)
 def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.uint8_t fLength):
     """Counts light cones from an array.
 
@@ -114,6 +117,7 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
                         lcidx += 1
                 # Convert the C char* array to a Python string
                 lc = lcPtr
+
                 # Count the unique history light cones (this is pure Python)
                 if lc in hlcones:
                     hlc_id = hlcones[lc]
@@ -121,6 +125,7 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
                     hlc_id = len(hlcones)
                     hlcones[lc] = hlc_id
                 lca[0,i,j] = hlc_id
+
 
                 ### Grab the future light cone
 
@@ -136,6 +141,7 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
                         lcidx += 1
                 # Convert the C char* array to a Python string
                 lc = lcPtr
+
                 # Count the unique history light cones (this is pure Python)
                 if lc in flcones:
                     flc_id = flcones[lc]
@@ -152,13 +158,14 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
 
                 # Set the history-future light cones
 
-                hflc = (hlc_id, flc_id)
-                if hflc in hflcones:
-                    hflc_id = hflcones[hflc]
-                else:
-                    hflc_id = len(hflcones)
-                    hflcones[hflc] = hflc_id
-                lca[2,i,j] = hflc_id
+                #hflc = (hlc_id, flc_id)
+                #if hflc in hflcones:
+                #    hflc_id = hflcones[hflc]
+                #else:
+                #    hflc_id = len(hflcones)
+                #    hflcones[hflc] = hflc_id
+                #lca[2,i,j] = hflc_id
+
 
     finally:
         free(lcPtr)
@@ -169,4 +176,5 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
     fgh_counts = dict(zip(keys,values))
     fgh_counts = ConditionalDistribution(fgh_counts, marginal=marg, event_type=Event)
 
+    #fgh_counts = None
     return fgh_counts, lca
