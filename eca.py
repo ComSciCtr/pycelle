@@ -308,11 +308,11 @@ class ECA(object):
         nRows, nCols = self._sta.shape
         if ic == 'random':
             self.ic = np.random.randint(0, 2, size=nCols).astype(np.uint8)
-            self._sta[0] = self.ic
+            self._sta[0] = self.ic.copy()
         elif ic == 'single':
             self.ic = np.zeros(nCols, dtype=np.uint8)
             self.ic[ int(np.floor(nCols/2)) ] = 1
-            self._sta[0] = self.ic
+            self._sta[0] = self.ic.copy()
         else:
             try:
                 self.ic = np.array(list(ic))
@@ -320,13 +320,13 @@ class ECA(object):
                 raise Exception('Invalid `ic` specificiation.')
             else:
                 # An explicit copy is required to avoid a view of the row
-                self.ic = self._sta[0].copy()
+                self._sta[0] = self.ic.copy()
 
     def reset(self):
         """Resets the ECA back to its initial condition."""
         self.t = 0
         self._sta *= 0
-        self._sta[0] = self.ic
+        self._sta[0] = self.ic.copy()
 
 def get_tikzrule(eca, boxes=True, numbers=True, rule=True, stand_alone=False):
     """Returns TiKz code for displaying the rule."""
