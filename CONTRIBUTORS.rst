@@ -30,6 +30,8 @@ repository. This can be obtained via::
 
     git log --raw | grep "^Author: " | sort | uniq
 
+Additional contributors (e.g. organizations) are listed in `HISTORY.rst`.
+
 ----------------
 Original Authors
 ----------------
