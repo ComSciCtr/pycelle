@@ -13,7 +13,7 @@ More information and demos: Coming soon!
 
 ``pycelle`` requires ``numpy`` 1.8+. To install::
 
-    git clone https://github.com/ComSciCtr/pycelle
+    git clone https://github.com/ComSciCtr/pycelle.git
     cd pycelle
     pip install .
     
