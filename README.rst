@@ -10,3 +10,10 @@
    :target: http://i.imgur.com/oy4G4DL.png
 
 More information and demos: Coming soon!
+
+``pycelle`` requires ``numpy`` 1.8+. To install::
+
+    git clone https://github.com/ComSciCtr/pycelle
+    cd pycelle
+    pip install .
+    
