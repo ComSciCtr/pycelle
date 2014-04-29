@@ -8,7 +8,6 @@ TODO: Periodic boundary conditions, in time and space, etc.
 from __future__ import division
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from .exceptions import PycelleException
 
@@ -83,6 +82,7 @@ class ECA(object):
             The axis to receive the plot.
 
         """
+        import matplotlib.pyplot as plt
         if ax is None:
             ax = plt.gca()
 
