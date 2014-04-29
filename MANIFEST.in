@@ -1,0 +1,11 @@
+include MANIFEST.in
+include setup.py
+include LICENSE.txt
+include README.rst
+include CONTRIBUTORS.rst
+include HISTORY.rst
+
+include pycelle/tests/*.py
+include pycelle/*/tests/*.py
+include pycelle/*/*/tests/*.py
+

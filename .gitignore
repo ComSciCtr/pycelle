@@ -7,7 +7,7 @@
 MANIFEST
 build/
 dist/
-dit.egg-info/
+pycelle.egg-info/
 
 # gedit
 *.*~
