@@ -26,7 +26,7 @@ __all__ = [
     'ECA',
 ]
 if lightcone_counts:
-    __all__.append(lightcone_counts)
+    __all__.append('lightcone_counts')
 
 class ECA(object):
     def __init__(self, rule, shape, ic=None):
