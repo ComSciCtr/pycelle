@@ -107,7 +107,7 @@ def main():
         caalgo = Extension(
             "pycelle._caalgo",
             ["pycelle/_caalgo.pyx"],
-            include_dirs=[numpy.get_include()],
+            include_dirs=[np.get_include()],
             libraries=["m"],
             extra_compile_args=['-std=c99']
         )
@@ -115,7 +115,7 @@ def main():
         lightcones = Extension(
             "pycelle._lightcones",
             ["pycelle/_lightcones.pyx"],
-            include_dirs=[numpy.get_include()],
+            include_dirs=[np.get_include()],
             libraries=["m"],
             extra_compile_args=['-std=c99']
         )
