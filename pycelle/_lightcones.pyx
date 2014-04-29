@@ -8,7 +8,6 @@
 from __future__ import division
 
 from collections import defaultdict
-from cmpy.infotheory import ConditionalDistribution, Distribution, Event
 
 import cython
 cimport cython
@@ -170,11 +169,4 @@ def lightcone_counts(np.ndarray[np.uint8_t, ndim=2] sta, np.uint8_t hLength, np.
     finally:
         free(lcPtr)
 
-    keys = fgh_counts.keys()
-    values = [Distribution(x, event_type=Event) for x in fgh_counts.values()]
-    marg = Distribution(h_counts, event_type=Event)
-    fgh_counts = dict(zip(keys,values))
-    fgh_counts = ConditionalDistribution(fgh_counts, marginal=marg, event_type=Event)
-
-    #fgh_counts = None
-    return fgh_counts, lca
+    return h_counts, fgh_counts, lca
