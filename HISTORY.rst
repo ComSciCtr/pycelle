@@ -1,7 +1,7 @@
 History
 =======
 
-Originally, ``pycelle`` began as a single module in ``cmpy``, a Python package
+Originally, ``pycelle`` began as a submodule of ``cmpy``, a Python package
 for computational mechanics developed as part of the Complexity Sciences
 Center at UC Davis.
 
