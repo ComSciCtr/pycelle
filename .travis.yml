@@ -1,0 +1,70 @@
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+
+env:
+  - CYTHON=0
+  - CYTHON=1
+
+virtualenv:
+  system_site_packages: true
+
+before_install:
+  # Use Numpy 1.6.2 up to Python 2.x
+  # Otherwise, rely on pip to install Numpy.
+  - 'if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then sudo apt-get install -qq python-numpy; fi;'
+  - 'if [ ${CYTHON} == "1" ]; then pip install cython; fi;'
+  # NumPy is a build dependency for Cython.  Should be a no-op for 2.x
+  - pip install numpy
+  - pip install coveralls --use-mirrors
+  - pip install --upgrade nose
+
+install:
+  # Install pycelle
+  - printenv PWD
+  - pip install .
+
+script:
+  # Move to new directory so that the package is not imported from repository.
+  # We need the full installation path.
+  #
+  # 2013-10-05
+  #     We should not import the package to determine its installation location.
+  #     The reason is that if importing the package fails, then we won't
+  #     change directories at all. Then when nosetests is run, zero
+  #     tests will be run. So we no longer do the following:
+  #
+  ###- cd
+  #### Move into the installation path.
+  ###- cd `python -c "from __future__ import print_function;import pycelle;import os;print(os.path.split(pycelle.__file__)[0])"`
+  #
+  #     Instead, we'll use pip, grep, and awk. A bit fragile but it works.
+  #
+  - export PYCELLE_INSTALL=`pip show pycelle | grep Location | awk '{print $2"/pycelle"}'`
+
+  ### Also, nose 1.3.0 does not tell coverage to only cover the requested
+  ### package (except during the report).  So to restrict coverage, we must
+  ### inform coverage through the .coveragerc file.
+  - cp .coveragerc $PYCELLE_INSTALL
+
+  # Export current directory for logs.
+  - cd $PYCELLE_INSTALL
+  - printenv PWD
+
+  # Run nosetests.
+
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then nosetests -v --with-coverage --cover-erase --cover-package=pycelle --exclude=.*3\.py; fi;
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "3" ]; then nosetests -v --with-coverage --cover-erase --cover-package=pycelle; fi;
+
+after_success:
+  # We must run coveralls from the git repo.
+  # But we ran tests from the installed directory.
+  # The .coverage file looks like it contains absolute paths,
+  # but coveralls does not seem to care.
+  - cp .coverage $TRAVIS_BUILD_DIR
+  - cd $TRAVIS_BUILD_DIR
+  - coveralls
