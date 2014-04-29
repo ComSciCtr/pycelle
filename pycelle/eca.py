@@ -1,9 +1,16 @@
+# -*- coding: utf-8 -*-
+
+"""
+TODO: Periodic boundary conditions, in time and space, etc.
+
+"""
+
 from __future__ import division
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from cmpy.exceptions import CMPyException
+from .exceptions import PycelleException
 
 try:
     from _caalgo import eca_cyevolve
@@ -11,10 +18,15 @@ except ImportError:
     eca_cyevolve = None
 
 try:
-    # This is only available if you have NumPy 1.7 or higher.
     from _lightcones import lightcone_counts
 except ImportError:
-    pass
+    lightcone_counts = None
+
+__all__ = [
+    'ECA',
+]
+if lightcone_counts:
+    __all__.append(lightcone_counts)
 
 class ECA(object):
     def __init__(self, rule, shape, ic=None):
@@ -27,7 +39,7 @@ class ECA(object):
         shape : 2-tuple
             The shape of the spacetime array.
         ic : array | str | None
-            The initial condition of the ECA. If `None`, then 'random' is used.
+            The initial condition of the ECA. If `None`, then 'single' is used.
 
         Examples
         --------
@@ -63,7 +75,7 @@ class ECA(object):
 
 
     def draw(self, ax=None):
-        """Show the current spacetime array.
+        """Draw the current spacetime array.
 
         Parameters
         ----------
@@ -165,7 +177,7 @@ class ECA(object):
         """
         if 'ic' in kwargs:
             self.initialize( kwargs.pop('ic') )
-            
+
         if t is None:
             # If we are not the last row, evolve to the last row.
             nRows = self._sta.shape[0]
@@ -280,7 +292,7 @@ class ECA(object):
             A specification of how to initialize the spacetime array.
             If some other initialization is desired, one can explicitly
             set the first row of the spacetime array via self._sta[0].
-            If `None`, then 'random' is used.
+            If `None`, then 'single' is used.
 
             Valid options:
 
@@ -297,7 +309,7 @@ class ECA(object):
 
         """
         if ic is None:
-            ic = 'random'
+            ic = 'single'
 
         # Reset the array
         self.t = 0
@@ -317,7 +329,7 @@ class ECA(object):
             try:
                 self.ic = np.array(list(ic))
             except:
-                raise Exception('Invalid `ic` specificiation.')
+                raise PycelleException('Invalid `ic` specificiation.')
             else:
                 # An explicit copy is required to avoid a view of the row
                 self._sta[0] = self.ic.copy()
@@ -467,10 +479,8 @@ def show_lightcone(eca, cell):
         index of the cell.
 
     """
-    eca._verify_initialized()
     # matplotlib
     pass
-
 
 def show_twolightcones(eca, cell1, cell2, color1=None, color2=None, color3=None):
     """Shows two light cones.
@@ -492,7 +502,6 @@ def show_twolightcones(eca, cell1, cell2, color1=None, color2=None, color3=None)
         cell1 and cell2.
 
     """
-    eca._verify_initialized()
     # matplotlib
     pass
 
