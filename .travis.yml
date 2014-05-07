@@ -9,7 +9,7 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-  #- "pypy"
+  - "pypy"
 
 matrix:
   fast_finish: true
@@ -22,19 +22,17 @@ matrix:
   allow_failures:
     # 3.4 and pypy Wheels are not yet available.
     - python: "3.4"
-      env: OPTIONAL_DEPS=true
     - python: "pypy"
-      env: OPTIONAL_DEPS=true
     - env: FROM_SOURCE=true
 
 env:
   global:
     # Install from wheels *only*.
     - PIPINSTALL="pip install -v --use-wheel --no-index --find-links=http://wheels.astropy.org --find-links=http://wheels2.astropy.org"
-    - NXOPTDEPS=""
-  matrix:
-    - OPTIONAL_DEPS=true
-    - OPTIONAL_DEPS=false
+
+  #matrix:
+  #  - OPTIONAL_DEPS=true
+  #  - OPTIONAL_DEPS=false
 
 before_install:
   ### Prepare the system to install prerequisites or dependencies
@@ -51,7 +49,7 @@ install:
   # Skipping pydot (not 3.x compatible)
   # Skipping gdal (errors during pip installs)
   - sudo apt-get update -qq
-  - if [ "${OPTIONAL_DEPS}" == "true" ]; then $PIPINSTALL numpy matplotlib Cython; fi
+  - $PIPINSTALL numpy matplotlib Cython
 
   # Try to install latest and greatest from source.
   - if [ "${FROM_SOURCE}" == "true" ]; then sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran; fi
