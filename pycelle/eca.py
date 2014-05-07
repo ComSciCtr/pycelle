@@ -87,7 +87,7 @@ class ECA(object):
                 # of possible CAs grows so fast you might cry: k**(k**(2*r+1))
                 max_rule = base**(base**(2*radius + 1)) - 1
                 if rule < 0 or rule > max_rule :
-                    msg = 'Rule must be between 0 and {1}, inclusive.'
+                    msg = 'Rule must be between 0 and {0}, inclusive.'
                     raise Exception(msg.format(max_rule))
 
             self.rule = rule
@@ -124,7 +124,7 @@ class ECA(object):
         self.initialize(ic, clear=False)
 
         # Store bases for evalution.
-        self._bases = self.base**np.arange(2*radius, -1, -1)
+        self._bases = (self.base**np.arange(2*radius, -1, -1, dtype=dtype))
 
         # Drawing defaults
         self._update_extent = True
@@ -185,7 +185,8 @@ class ECA(object):
             The value of the cell immediately below the parents.
 
         """
-        idx = np.sum( self._bases * np.asarray(parents) )
+        # Calculate the base-10 representation of the parents.
+        idx = ( self._bases * np.asarray(parents) ).sum()
         return self.eval_int(idx)
 
     def eval_int(self, parents):
@@ -195,11 +196,11 @@ class ECA(object):
         ----------
         parents : int
             An integer in the interval [0, k) that represents the values of the
-            parent cells. Here, k is equal to b**(2*r-1) where b is the base
-            and r is the radius of the ECA. Recall that in Wolfram's notation,
-            111 (integer 7) corresponds is the first lookup in the rule for
-            a binary ECA with radius equal to 1. This convention is followed
-            for all ECAs.
+            parent cells. Here, k is a base-10 number equal to b**(2*r-1) where
+            b is the base and r is the radius of the ECA. Recall that in
+            Wolfram's notation, 111 (base-10 integer 7) corresponds is the
+            first lookup rule for a binary ECA with radius equal to 1. This
+            convention is followed for all ECAs.
 
         Returns
         -------
@@ -213,7 +214,8 @@ class ECA(object):
         else:
             # Flip the index to follow the convention that the largest number
             # corresponds to first element in the lookup table.
-            idx = L - 1 - parents
+            # Need to cast to int since: int - uint64 -> float.
+            idx = L - 1 - int(parents)
             return self.lookup[idx]
 
 
@@ -262,18 +264,19 @@ class ECA(object):
 
     def _evolve_python(self, iterations):
         sta = self._sta
-        nRows = sta.shape[0]
+        nRows, nCols = sta.shape
+        radius = self.radius
         for i in range(self.t, self.t + iterations):
             row = sta[i % nRows]
-            # This makes 3 copies of the data. Oh well.
-            windows = np.vstack([np.roll(row,1), row, np.roll(row,-1)])
-            windows = windows.transpose()
-            for j,parents in enumerate(windows):
-                sta[(i+1) % nRows,j] = self.eval(parents) # slow
+            ii = (i + 1) % nRows
+            for j in range(nCols):
+                indices = range(j - radius, j + radius + 1)
+                parents = row.take(indices, mode='wrap')
+                sta[ii, j] = self.eval(parents) # slow
 
 
     def _evolve_cython(self, iterations):
-        eca_cyevolve(self.lookup, self._sta, iterations, self.t)
+        eca_cyevolve(self, iterations)
 
     def get_spacetime(self):
         """Returns a copy of the spacetime array."""
