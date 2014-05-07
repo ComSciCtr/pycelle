@@ -9,14 +9,14 @@ file. As a rule, no name should be added to this list without the approval of
 the person associated with that name.
 
 In general, creating a comprehensive list of contributors can be difficult, and
-the list within this file is almost certainly incomplete.  In general,
-contributors include end users, testers, bug reporters, build/integration
-systems such as
+the list within this file is almost certainly incomplete. Contributors include 
+end users, testers, bug reporters, build/integration systems such as
 `TravisCI <https://travis-ci.org>`_,
 `coveralls <https://coveralls.io>`_, and
 `readthedocs <https://readthedocs.org>`_,
 contributors who wish to remain anonymous, funding sources, advisors, etc.
-Simply stated: ``pycelle`` is a collaborative project.
+Simply stated: ``pycelle`` is a collaborative project (and we don't discriminate
+between human and nonhuman contributions).
 
 Do you want to make your contribution known? If you have commit access, edit
 this file and add your name. If you do not have commit access, feel free to open
