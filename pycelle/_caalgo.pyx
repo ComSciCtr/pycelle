@@ -7,13 +7,8 @@
 
 from __future__ import division
 
-from collections import defaultdict
-from cmpy.infotheory import ConditionalDistribution, Distribution, Event
-
 import cython
 cimport cython
-
-from libc.stdlib cimport malloc, free
 
 import numpy as np
 cimport numpy as np
@@ -24,19 +19,14 @@ __all__ = ['eca_cyevolve']
 # Required before using any NumPy C-API
 np.import_array()
 
-cdef inline size_t bindex(np.uint8_t x, np.uint8_t y, np.uint8_t z):
-    """
-    Given the parents of a cell, return the binary number it represents.
-    This number will be used as an index in the (reversed) lookup array.
-    Ex:  bindex(1,1,1) -> 7
-    """
-    return x * 4 + y * 2 + z
-
+ITYPE = np.uint64
+ctypedef np.uint64_t ITYPE_t
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.embedsignature(True)
-def eca_cyevolve(object lookup, np.ndarray[np.uint8_t, ndim=2] sta not None, size_t iterations, size_t rowIdx):
+@cython.cdivision(True)
+def eca_cyevolve(object eca, object iterations):
     """
     Evolve the ECA from row `rowIdx` by `t` time steps.
 
@@ -44,46 +34,65 @@ def eca_cyevolve(object lookup, np.ndarray[np.uint8_t, ndim=2] sta not None, siz
     ----------
 
     """
-    # We reverse the lookup array so that 000 is at index 0.
-    revlookup = list(reversed(lookup))
-    cdef np.ndarray[np.uint8_t, ndim=1] lookup_ = np.array(revlookup, dtype=np.uint8)
-
-    cdef np.uint8_t *lookupPtr = <np.uint8_t *>PyArray_DATA(lookup_)
-    cdef np.uint8_t x, y, z
-    cdef size_t i, j, head, nexthead
+    cdef np.ndarray[ITYPE_t, ndim=1] bases = eca._bases
+    cdef np.ndarray[ITYPE_t, ndim=2] sta = eca._sta
+    cdef size_t rowIdx = eca.t
+    cdef size_t rowIdx_final = eca.t + iterations
 
     cdef size_t nRows = sta.shape[0]
     cdef size_t nCols = sta.shape[1]
+
+    # We reverse the lookup array so that 000 is at index 0 and 111 at index 7.
+    revlookup = list(reversed(eca.lookup))
+    cdef np.ndarray[ITYPE_t, ndim=1] lookup = np.array(revlookup, dtype=ITYPE)
+
+    cdef ITYPE_t *lookupPtr = <ITYPE_t *>PyArray_DATA(lookup)
+    cdef ITYPE_t *basePtr = <ITYPE_t *>PyArray_DATA(bases)
+    cdef size_t i, j, k, idx, head, nexthead
+    cdef int l
+
+    cdef size_t radius = eca.radius
+    cdef size_t maxValue = eca.base - 1
+    cdef size_t nParents = 2 * radius + 1
 
     # Ensure the initial row consists of 0s and 1s. Without this, bad
     # initial values could create parent indexes larger than 7.
     head = rowIdx % nRows
     for i in range(nCols):
-        if sta[head,i] > 0:
-            sta[head,i] = 1
+        if sta[head,i] > maxValue:
+            # We clip down to the maxValue.
+            sta[head,i] = maxValue
 
     # Evolve it
-    for i in range(rowIdx, rowIdx + iterations):
+
+    for i in range(rowIdx, rowIdx_final):
         head = i % nRows
         nexthead = (i+1) % nRows
 
-        # First column
-        x = sta[head, nCols-1]
-        y = sta[head, 0]
-        z = sta[head, 1]
-        sta[nexthead, 0] = lookupPtr[bindex(x,y,z)];
+        # Special case: The first r cells have parents that wrap.
+        for j in range(radius):
+            idx = 0
+            for k in range(nParents):
+                l = j - radius + k
+                if l < 0:
+                    l += nCols
+                idx += basePtr[k] * sta[head, l]
+            sta[nexthead, j] = lookupPtr[idx]
 
-        # All other columns
-        for j in range(1, nCols-1):
-            x = y
-            y = z
-            z = sta[head, j+1]
-            sta[nexthead, j] = lookupPtr[bindex(x,y,z)]
+        # Typical case: All parents have regular indexes.
+        for j in range(radius, nCols - radius):
+            idx = 0
+            for k in range(nParents):
+                idx += basePtr[k] * sta[head, j - radius + k]
+            sta[nexthead, j] = lookupPtr[idx]
 
-        # Last column
-        x = y
-        y = z
-        z = sta[head, 0]
-        sta[nexthead, nCols-1] = lookupPtr[bindex(x,y,z)]
-
+        # Special case: The last r cells have parents that wrap.
+        for j in range(nCols - radius, nCols):
+            idx = 0
+            for k in range(nParents):
+                l = j - radius + k
+                if l >= nCols:
+                    l -= nCols
+                idx += basePtr[k] * sta[head, l]
+            sta[nexthead, j] = lookupPtr[idx]
 
