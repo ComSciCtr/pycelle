@@ -6,8 +6,8 @@
    :target: https://coveralls.io/r/ComSciCtr/pycelle?branch=master
 
 
-.. image:: http://i.imgur.com/NdImIRn.png
-   :target: http://i.imgur.com/NdImIRn.png
+.. image:: http://i.imgur.com/KaCplKr.png
+   :target: http://i.imgur.com/KaCplKr.png
 
 More information and demos: Coming soon!
 
