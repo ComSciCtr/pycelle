@@ -41,7 +41,7 @@ class ECA(object):
             must consist of integers less than or equal to `base` and must
             be of the appropriate length.
         shape : 2-tuple
-            The shape of the spacetime array use to store evolutions.
+            The shape of the spacetime array used to store evolutions.
         ic : array | str | None
             The initial condition of the cellular automata. If `None`, then
             'single' is used. One can also specify 'random'. Otherwise, one
@@ -107,7 +107,7 @@ class ECA(object):
                 raise Exception(m)
 
             # Convert the lookup table to a base-10 integer.
-            base10 = base_expansion(rule, 10, from_base=base, zfill=L)
+            base10 = base_expansion(list(rule), 10, from_base=base, zfill=L)
             self.rule = int(''.join(map(str, base10)))
             # Store the lookup table...make sure they are all ints.
             self.lookup = list(map(int, rule))
@@ -163,8 +163,14 @@ class ECA(object):
             extent = None
 
         ax.matshow(arr, cmap=plt.cm.gray_r, vmin=0, vmax=self.base-1, extent=extent)
-        title = 'Rule {0}, b={1}, r={1}'
-        ax.set_title(title.format(self.rule, self.base, self.radius))
+
+        if len(str(self.rule)) > 10:
+            title = "ECA: r={0}, b={1}"
+            title = title.format(self.radius, self.base)
+        else:
+            title = 'Rule {0}, r={1}, b={2}'
+            title = title.format(self.rule, self.radius, self.base)
+        ax.set_title(title)
         ax.set_xlabel('$x$')
         ax.set_ylabel('$t$', rotation='horizontal')
         ax.xaxis.set_ticks_position('bottom')
@@ -405,6 +411,46 @@ class ECA(object):
         self.t = 0
         self._sta *= 0
         self._sta[0] = self.ic.copy()
+
+    @classmethod
+    def random_ECA(cls, shape, ic=None, radius=1, base=2, prng=None):
+        """
+        Returns a cellular automata with a randomly generated rule.
+
+        Parameters
+        ----------
+        shape : 2-tuple
+            The shape of the spacetime array used to store evolutions.
+        ic : array | str | None
+            The initial condition of the cellular automata. If `None`, then
+            'single' is used. One can also specify 'random'. Otherwise, one
+            can pass in an array of length equal to `shape[1]` containing
+            the initial condition.
+        radius : int
+            The radius of the cellular automata. The number of neighbors in
+            the previous time step is n = 2*radius + 1. As of now, the radius
+            must an integer greater than one. [Thus, this class does not
+            support cellular automata with radius equal to one half.]
+        base : int
+            The number of distinct cell values. In the default situation,
+            the base is equal to 2, and so, cells can only be 0 or 1.
+        prng : object
+            A pseudorandom number generator that supports NumPy's RandomState
+            API. We use the randint() method. If `None`, then `numpy.random`
+            is used.
+
+        Returns
+        -------
+        eca : ECA
+            The randomly generated ECA.
+
+        """
+        if prng is None:
+            prng = np.random
+
+        rule = prng.randint(0, base, base**(2 * radius + 1))
+        eca = ECA(rule, shape, ic=ic, radius=radius, base=base)
+        return eca
 
 def get_tikzrule(eca, boxes=True, numbers=True, rule=True, stand_alone=False):
     """Returns TiKz code for displaying the rule."""
