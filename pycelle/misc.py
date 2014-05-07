@@ -46,7 +46,7 @@ def base_expansion(n, to_base, from_base=10, zfill=None):
     try:
         len(n)
     except TypeError:
-        n = map(int, str(n))
+        n = list(map(int, str(n)))
 
     if n == [0]:
         return n
