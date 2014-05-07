@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 
 from .exceptions import PycelleException
+from .misc import base_expansion
 
 try:
     from _caalgo import eca_cyevolve
@@ -28,50 +29,104 @@ if lightcone_counts:
     __all__.append('lightcone_counts')
 
 class ECA(object):
-    def __init__(self, rule, shape, ic=None):
-        """Initialize the ECA.
+    def __init__(self, rule, shape, ic=None, radius=1, base=2):
+        """Initialize the elementary cellular automata (ECA).
 
         Parameters
         ----------
-        rule : int
-            The ECA rule to initialize.
+        rule : int | list
+            The ECA rule to initialize. If `rule` is an integer, then it is
+            a base-10 declaration of the desired rule.  If it is a list, then
+            it specifies the lookup table for the cellular automata. The list
+            must consist of integers less than or equal to `base` and must
+            be of the appropriate length.
         shape : 2-tuple
-            The shape of the spacetime array.
+            The shape of the spacetime array use to store evolutions.
         ic : array | str | None
-            The initial condition of the ECA. If `None`, then 'single' is used.
+            The initial condition of the cellular automata. If `None`, then
+            'single' is used. One can also specify 'random'. Otherwise, one
+            can pass in an array of length equal to `shape[1]` containing
+            the initial condition.
+        radius : int
+            The radius of the cellular automata. The number of neighbors in
+            the previous time step is n = 2*radius + 1. As of now, the radius
+            must an integer greater than one. [Thus, this class does not
+            support cellular automata with radius equal to one half.]
+        base : int
+            The number of distinct cell values. In the default situation,
+            the base is equal to 2, and so, cells can only be 0 or 1.
 
         Examples
         --------
         >>> x = ECA(54, (64,64))
         >>> y = ECA(54, (32,32), 'random')
+        >>> x = ECA([1,0,1,1,0,0,1,1], (32, 32))
 
         """
-        if rule < 0 or rule >= 256:
-            raise Exception('Rule must be between 0 and 255, inclusive.')
-        else:
+        if radius < 1 or radius != int(radius):
+            raise Exception("Radius must be a positive integer.")
+
+        if base != int(base) or base < 2:
+            m = "Base must be a positive integer, greater than or equal to 2."
+            raise Exception(m)
+
+        self.radius = radius
+        self.base = base
+
+        L = base ** (2 * radius + 1)
+
+        # If rule is the lookup table (LUT), then, no need to convert from
+        # rule number to LUT.
+        try:
+            len(rule)
+        except TypeError:
+            # Then rule is a base-10 specification of the LUT.
+
+            if base == 2:
+                # Only check for base == 2. Once you hit base == 3, the number
+                # of possible CAs grows so fast you might cry: k**(k**(2*r+1))
+                max_rule = base**(base**(2*radius + 1)) - 1
+                if rule < 0 or rule > max_rule :
+                    msg = 'Rule must be between 0 and {1}, inclusive.'
+                    raise Exception(msg.format(max_rule))
+
             self.rule = rule
 
-            # Privately, store a list of the binary bits
-            self._lookup = map(int, '{0:08b}'.format(rule))
+            # Store a list of the binary bits.
+            self.lookup = base_expansion(rule, base, zfill=L)
+
+        else:
+            # Then `rule` is the LUT.
+
+            # Make sure it is consistent.
+            if max(rule) >= base:
+                m = 'Lookup table in `rule` is inconsistent with `base`.'
+                raise Exception(m)
+            if len(rule) != L:
+                m = 'Length of lookup table in `rule` is inconsistent with `base` and `radius`.'
+                raise Exception(m)
+
+            # Convert the lookup table to a base-10 integer.
+            base10 = base_expansion(rule, 10, from_base=base, zfill=L)
+            self.rule = int(''.join(map(str, base10)))
+            # Store the lookup table...make sure they are all ints.
+            self.lookup = list(map(int, rule))
 
         # spacetime array
         self.ic = None
         self.t = 0
-        self._sta = np.zeros(shape, dtype=np.uint8, order='C')
+        if base <= 8:
+            dtype = np.uint8
+        else:
+            dtype = np.int
+        self._sta = np.zeros(shape, dtype=dtype, order='C')
         self.initialize(ic, clear=False)
 
-        if eca_cyevolve is not None:
-            self._cythonized = True
-        else:
-            self._cythonized = False
+        # Store bases for evalution.
+        self._bases = self.base**np.arange(2*radius, -1, -1)
 
         # Drawing defaults
         self._update_extent = True
-
-
-    def __repr__(self):
-        return 'ECA({0})'.format(self.rule)
-
 
     def draw(self, ax=None):
         """Draw the current spacetime array.
@@ -106,8 +161,9 @@ class ECA(object):
         else:
             extent = None
 
-        ax.matshow(arr, cmap=plt.cm.gray_r, extent=extent)
-        ax.set_title('Rule {0}'.format(self.rule))
+        ax.matshow(arr, cmap=plt.cm.gray_r, vmin=0, vmax=self.base-1, extent=extent)
+        title = 'Rule {0}, b={1}, r={1}'
+        ax.set_title(title.format(self.rule, self.base, self.radius))
         ax.set_xlabel('$x$')
         ax.set_ylabel('$t$', rotation='horizontal')
         ax.xaxis.set_ticks_position('bottom')
@@ -128,9 +184,8 @@ class ECA(object):
             The value of the cell immediately below the parents.
 
         """
-        iparents = int(''.join(map(str, parents)), 2)
-        return self.eval_int(iparents)
-
+        idx = np.sum( self._bases * np.asarray(parents) )
+        return self.eval_int(idx)
 
     def eval_int(self, parents):
         """Returns the output of the ECA given the parents as an integer.
@@ -138,9 +193,12 @@ class ECA(object):
         Parameters
         ----------
         parents : int
-            An integer between 0 and 7, inclusive, that represents the
-            the 3 parent cells.  Recall that in Wolfram's notation,
-            111 (integer 7) corresponds is the first lookup in the rule.
+            An integer in the interval [0, k) that represents the values of the
+            parent cells. Here, k is equal to b**(2*r-1) where b is the base
+            and r is the radius of the ECA. Recall that in Wolfram's notation,
+            111 (integer 7) corresponds is the first lookup in the rule for
+            a binary ECA with radius equal to 1. This convention is followed
+            for all ECAs.
 
         Returns
         -------
@@ -148,12 +206,14 @@ class ECA(object):
             The value of the cell immediately below the parents.
 
         """
-        if parents < 0 or parents > 7:
+        L = len(self.lookup)
+        if parents > L:
             raise Exception('Invalid parents: {0}'.format(parents))
         else:
-            # Flip the index so that 7 is index 0.
-            idx = -(parents - 7)
-            return self._lookup[idx]
+            # Flip the index to follow the convention that the largest number
+            # corresponds to first element in the lookup table.
+            idx = L - 1 - parents
+            return self.lookup[idx]
 
 
     def evolve(self, t=None, draw=True, **kwargs):
@@ -212,8 +272,7 @@ class ECA(object):
 
 
     def _evolve_cython(self, iterations):
-        eca_cyevolve(self._lookup, self._sta, iterations, self.t)
-
+        eca_cyevolve(self.lookup, self._sta, iterations, self.t)
 
     def get_spacetime(self):
         """Returns a copy of the spacetime array."""
@@ -277,6 +336,8 @@ class ECA(object):
             The TikZ code which displays the rule.
 
         """
+        if self.base != 2:
+            raise NotImplementedError
         return get_tikzrule(self, boxes, numbers, rule, stand_alone)
 
 
@@ -318,12 +379,13 @@ class ECA(object):
 
         # Set the initial condition
         nRows, nCols = self._sta.shape
+        dtype = self._sta.dtype
         if ic == 'random':
-            self.ic = np.random.randint(0, 2, size=nCols).astype(np.uint8)
+            self.ic = np.random.randint(0, self.base, size=nCols).astype(dtype)
             self._sta[0] = self.ic.copy()
         elif ic == 'single':
-            self.ic = np.zeros(nCols, dtype=np.uint8)
-            self.ic[ int(np.floor(nCols/2)) ] = 1
+            self.ic = np.zeros(nCols, dtype=dtype)
+            self.ic[ int(np.floor(nCols/2)) ] = self.base - 1
             self._sta[0] = self.ic.copy()
         else:
             try:
@@ -504,4 +566,10 @@ def show_twolightcones(eca, cell1, cell2, color1=None, color2=None, color3=None)
     """
     # matplotlib
     pass
+
+
+if eca_cyevolve is not None:
+    ECA._cythonized = True
+else:
+    ECA._cythonized = False
 
