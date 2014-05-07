@@ -39,7 +39,7 @@ class ECA(object):
             a base-10 declaration of the desired rule.  If it is a list, then
             it specifies the lookup table for the cellular automata. The list
             must consist of integers less than or equal to `base` and must
-            be of the appropriate length.
+            be of the appropriate length: base**(2 * radius + 1).
         shape : 2-tuple
             The shape of the spacetime array used to store evolutions.
         ic : array | str | None
@@ -48,10 +48,10 @@ class ECA(object):
             can pass in an array of length equal to `shape[1]` containing
             the initial condition.
         radius : int
-            The radius of the cellular automata. The number of neighbors in
-            the previous time step is n = 2*radius + 1. As of now, the radius
-            must an integer greater than one. [Thus, this class does not
-            support cellular automata with radius equal to one half.]
+            The radius of the cellular automata. For any cell, the number of
+            neighbors in the previous time step is n = 2*radius + 1. As of now,
+            the radius must be an integer greater than one. [Thus, this class
+            does not support cellular automata with radius equal to one half.]
         base : int
             The number of distinct cell values. In the default situation,
             the base is equal to 2, and so, cells can only be 0 or 1.
@@ -59,8 +59,8 @@ class ECA(object):
         Examples
         --------
         >>> x = ECA(54, (64,64))
-        >>> y = ECA(54, (32,32), 'random')
-        >>> x = ECA([1,0,1,1,0,0,1,1], (32, 32))
+        >>> y = ECA(54, (31,31), 'random')
+        >>> z = ECA([1,0,1,1,0,0,1,1], (31, 31))
 
         """
         if radius < 1 or radius != int(radius):
@@ -129,6 +129,7 @@ class ECA(object):
         # Drawing defaults
         self._update_extent = True
 
+
     def draw(self, ax=None):
         """Draw the current spacetime array.
 
@@ -194,6 +195,7 @@ class ECA(object):
         # Calculate the base-10 representation of the parents.
         idx = ( self._bases * np.asarray(parents) ).sum()
         return self.eval_int(idx)
+
 
     def eval_int(self, parents):
         """Returns the output of the ECA given the parents as an integer.
@@ -268,6 +270,7 @@ class ECA(object):
 
         return self.t
 
+
     def _evolve_python(self, iterations):
         sta = self._sta
         nRows, nCols = sta.shape
@@ -283,6 +286,7 @@ class ECA(object):
 
     def _evolve_cython(self, iterations):
         eca_cyevolve(self, iterations)
+
 
     def get_spacetime(self):
         """Returns a copy of the spacetime array."""
@@ -324,7 +328,6 @@ class ECA(object):
             raise CMPyException(msg)
 
         return self._sta[t % self._sta.shape[0]]
-
 
     def get_tikzrule(self, boxes=True, numbers=True, rule=True, stand_alone=False):
         """Returns TiKz code for displaying the ECA rule.
