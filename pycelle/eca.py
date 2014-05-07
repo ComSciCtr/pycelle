@@ -115,10 +115,11 @@ class ECA(object):
         # spacetime array
         self.ic = None
         self.t = 0
-        if base <= 8:
-            dtype = np.uint8
-        else:
-            dtype = np.int
+
+        # For Cython, we aren't using fused types yet. So let's use just onee
+        # dtype, independent of the base.
+        dtype = np.uint64
+
         self._sta = np.zeros(shape, dtype=dtype, order='C')
         self.initialize(ic, clear=False)
 
