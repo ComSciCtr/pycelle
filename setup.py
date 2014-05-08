@@ -157,7 +157,7 @@ def main():
 
     kwds = {
         'name':                 "pycelle",
-        'version':              "0.0.1dev",
+        'version':              "0.0.1",
         'url':                  "https://github.com/ComSciCtr/pycelle",
         'packages':             packages,
         'package_data':         package_data,
