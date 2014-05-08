@@ -96,7 +96,7 @@ def main():
             msg = "Please install NumPy first."
             msg = "Alternatively, disable Cython extensions:\n\n"
             msg += "    python setup.py install --nocython\n"
-            msg += "    pip install --install-option='--nocython'\n\n"
+            msg += "    pip install --install-option='--nocython pycelle'\n\n"
             print(msg)
             raise
 
@@ -142,14 +142,23 @@ def main():
         'pycelle',
     ]
 
+    classifiers = [
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+    ]
+
     # Tests
     package_data = dict(zip(packages, [['tests/*.py']]*len(packages)))
 
     kwds = {
         'name':                 "pycelle",
         'version':              "0.0.1dev",
-        'url':                  "",
-
+        'url':                  "https://github.com/ComSciCtr/pycelle",
         'packages':             packages,
         'package_data':         package_data,
         'provides':             ['pycelle'],
@@ -159,11 +168,12 @@ def main():
         'data_files':           data_files,
         'include_package_data': True,
 
-        'author':               "Humans",
+        'author':               "pycelle developers",
         'author_email':         "",
         'description':          "Python package for cellular automata.",
-        'long_description':     open('README.rst').read(),
+        'long_description':     "",
         'license':              "BSD",
+        'classifiers':          classifiers,
     }
 
     # Automatic dependency resolution is supported only by setuptools.
