@@ -107,10 +107,11 @@ class ECA(object):
                 raise Exception(m)
 
             # Convert the lookup table to a base-10 integer.
-            base10 = base_expansion(list(rule), 10, from_base=base, zfill=L)
+            lookup = list(map(int, rule))
+            base10 = base_expansion(lookup, 10, from_base=base, zfill=L)
             self.rule = int(''.join(map(str, base10)))
             # Store the lookup table...make sure they are all ints.
-            self.lookup = list(map(int, rule))
+            self.lookup = lookup
 
         # spacetime array
         self.ic = None
