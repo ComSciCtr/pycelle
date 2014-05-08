@@ -11,9 +11,17 @@
 
 More information and demos: Coming soon!
 
-``pycelle`` requires ``numpy`` 1.8+. To install::
+``pycelle`` requires ``numpy`` 1.8+.  Cython is a recommended dependency.
+
+To install::
+
+	pip install Cython
+	pip install pycelle
+
+To help out with development, do the following instead::
 
     git clone https://github.com/ComSciCtr/pycelle.git
     cd pycelle
-    pip install .
-    
+    pip install Cython
+    pip install -e .
+
