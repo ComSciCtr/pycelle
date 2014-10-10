@@ -63,8 +63,8 @@ class ECA(object):
         >>> z = ECA([1,0,1,1,0,0,1,1], (31, 31))
 
         """
-        if radius < 1 or radius != int(radius):
-            raise Exception("Radius must be a positive integer.")
+        #if radius < 1 or radius != int(radius):
+        #    raise Exception("Radius must be a positive integer.")
 
         if base != int(base) or base < 2:
             m = "Base must be a positive integer, greater than or equal to 2."
@@ -73,7 +73,7 @@ class ECA(object):
         self.radius = radius
         self.base = base
 
-        L = base ** (2 * radius + 1)
+        L = int(base ** (2 * radius + 1))
 
         # If rule is the lookup table (LUT), then, no need to convert from
         # rule number to LUT.
@@ -85,7 +85,7 @@ class ECA(object):
             if base == 2:
                 # Only check for base == 2. Once you hit base == 3, the number
                 # of possible CAs grows so fast you might cry: k**(k**(2*r+1))
-                max_rule = base**(base**(2*radius + 1)) - 1
+                max_rule = int(base**(base**(2*radius + 1)) - 1)
                 if rule < 0 or rule > max_rule :
                     msg = 'Rule must be between 0 and {0}, inclusive.'
                     raise Exception(msg.format(max_rule))
@@ -259,10 +259,13 @@ class ECA(object):
             else:
                 t = nRows - 1 - mod
 
-        if self._cythonized:
-            self._evolve_cython(t)
+        if hasattr(self, 'hex_onehalf'):
+            self._hexonehalf_evolve_cython(t)
         else:
-            self._evolve_python(t)
+            if self._cythonized:
+                self._evolve_cython(t)
+            else:
+                self._evolve_python(t)
 
         self.t += t
 
@@ -288,6 +291,9 @@ class ECA(object):
     def _evolve_cython(self, iterations):
         eca_cyevolve(self, iterations)
 
+    def _hexonehalf_evolve_cython(self, iterations):
+        from _caalgo import eca_hexonehalf_cyevolve
+        eca_hexonehalf_cyevolve(self, iterations)
 
     def get_spacetime(self):
         """Returns a copy of the spacetime array."""
